@@ -34,15 +34,15 @@ Recommended Android stack:
 First playable milestones:
 
 1. Android project skeleton with one Compose screen.
-2. Today screen with demo progress, impulse, daily task, and quest list.
+2. Today screen with layered day progress, impulse, daily task, and quest list.
 3. Complete an Impulse of the day and earn points.
 4. Save data locally with Room.
 5. Complete a Daily task and generate a Trace of the day.
-6. Weekly planning screen.
-7. Quest creation with difficulty/importance/energy fields.
+6. Quest list and editor with difficulty/importance/energy fields.
+7. Weekly planning screen.
 8. Alternative suggestions for low-energy days.
-9. Progress/history screen.
-10. Rewards and capsules.
+9. Progress/history screen with colored day levels.
+10. Custom rewards and capsules.
 
 ## Detailed Instructions for Agents
 
@@ -60,6 +60,36 @@ The first version should prioritize:
 - Offline reliability.
 
 Do not build a generic task manager first. Build the motivational loop first.
+
+### Current Design Direction
+
+The current visual reference lives at:
+
+- `docs/design/impulse-mobile-mockups.html`
+
+The app should use four primary destinations in a bottom navigation bar:
+
+- `Today`: day progress, impulse of the day, daily task, and quick extra quests.
+- `Tasks`: quest list, adding/editing tasks, importance, difficulty, energy, and points.
+- `Stats`: day traces, weekly overview, category balance, and point history.
+- `Rewards`: custom user rewards, reward cost, reward type, and claimed reward history.
+
+The first screen should show current day progress, not weekly progress. Weekly progress belongs in Stats.
+
+Day progress should be a compact point-based layered meter:
+
+1. Green fills from start to end for the minimum useful day.
+2. After the green level is full, blue fills from the start on top of green for a stronger day.
+3. After the blue level is full, purple fills from the start on top of blue for a very productive day.
+
+The weekly Stats view should color each day by the highest reached day level:
+
+- green: minimum useful day completed;
+- blue: stronger day completed;
+- purple: very productive day completed;
+- neutral: no visible trace yet.
+
+Rewards must be user-configurable. The user should be able to create and edit rewards with a title, type, cost in points, and description. Rewards remain celebratory markers, not permission gates.
 
 ### Vocabulary
 
@@ -292,8 +322,11 @@ Fields:
 - `costPoints`
 - `kind`: `ritual | capsule | visual | experience | rest`
 - `status`: `available | claimed | archived`
+- `isCustom`
 - `createdAt`
 - `updatedAt`
+
+Users must be able to add and edit their own rewards. Seeded rewards are examples only, not fixed product rules.
 
 ### Scoring Principles
 
@@ -304,6 +337,14 @@ The first scoring formula should be simple:
 - Completing the daily task gives a bonus.
 - Completing the impulse gives a small startup bonus.
 - Completing an alternative gives full respect, but the trace should record that it was an alternative.
+
+Day progress should map total points to three positive levels:
+
+- green: the minimum useful day is complete;
+- blue: the user went beyond the minimum with stronger or additional actions;
+- purple: the user had a very productive day, usually with important or difficult actions.
+
+The exact thresholds can start as constants and become configurable later.
 
 Avoid punishment mechanics:
 
@@ -321,7 +362,7 @@ Reward language:
 
 Morning screen flow:
 
-1. Show recent progress first.
+1. Show today's point progress first.
 2. Offer one `Impulse of the day`.
 3. After completion, give points, visual feedback, and a short encouraging line.
 4. Show the `Daily task`.
@@ -333,10 +374,17 @@ Phone-specific rules:
 - Primary actions must be thumb-friendly.
 - Do not require typing for the first morning win.
 - Make completion possible in one tap plus optional note.
-- Use bottom navigation only after there are at least three destinations.
+- Use bottom navigation for the four core destinations: Today, Tasks, Stats, Rewards.
 - Prefer bottom sheets for quick actions and alternatives.
 - Keep progress visible without making the screen feel like a dashboard spreadsheet.
 - Support dark theme early because the app may be opened right after waking up.
+
+Task management flow:
+
+1. Show a searchable list of quests/tasks.
+2. Let the user add and edit tasks outside the morning flow.
+3. Each task should expose importance, difficulty, energy cost, duration, points, and kind.
+4. The Today screen can use this data for suggestions, but should not become the main editing surface.
 
 Weekly planning flow:
 
@@ -349,9 +397,18 @@ Weekly planning flow:
 History flow:
 
 1. Show a week as human-readable traces, not only charts.
-2. Show category balance.
-3. Show points and rewards as secondary reinforcement.
-4. Let the user open a day and see what actually happened.
+2. Color week days by the best day level reached: green, blue, purple, or neutral.
+3. Show category balance.
+4. Show points and rewards as secondary reinforcement.
+5. Let the user open a day and see what actually happened.
+
+Rewards flow:
+
+1. Show available points.
+2. Show custom user rewards.
+3. Let the user add/edit reward title, type, description, and point cost.
+4. Let the user claim rewards as rituals or visual markers.
+5. Avoid language that implies the user is not allowed to rest or enjoy something without earning it.
 
 Design direction:
 
@@ -406,15 +463,17 @@ Goal:
 Scope:
 
 - Today screen layout.
-- Recent progress strip.
+- Compact layered day progress meter.
 - Impulse of the day card.
 - Daily task card.
 - Secondary quest list.
+- Bottom navigation shell with Today, Tasks, Stats, and Rewards labels.
 - Demo data only, no persistence yet.
 
 Manual acceptance:
 
 - User can open the app and understand the morning flow.
+- Day progress feels like today's momentum, not weekly history.
 - Screen feels usable on a phone viewport.
 - No real action needs to persist yet.
 
@@ -512,7 +571,63 @@ Issue title:
 
 - `Complete daily task and create day trace`
 
-#### Iteration 5: Weekly Planning
+#### Iteration 5: Task List and Editor
+
+Goal:
+
+- Let the user manage reusable quests and tasks.
+
+Scope:
+
+- Add Tasks screen.
+- Add quest/task list with search or category filters.
+- Add task creation and editing.
+- Fields: title, category, duration, difficulty, importance, energy cost, points, and kind.
+- Keep persistence if Room already exists by this iteration.
+
+Manual acceptance:
+
+- User can create a task and see it in the task list.
+- User can edit importance and difficulty.
+- Today screen remains focused on action, not task administration.
+
+Automated tests:
+
+- Quest validation tests.
+- ViewModel task list tests.
+- Compose UI create/edit task flow.
+
+Issue title:
+
+- `Add task list and editor`
+
+#### Iteration 6: Quest Classification
+
+Goal:
+
+- Classify quests using difficulty, importance, duration, and energy.
+
+Scope:
+
+- Simple recommendation label: impulse/daily/intermediate/alternative.
+- Suggested default points.
+- Suggested use cases for Today screen.
+
+Manual acceptance:
+
+- User can see whether a quest is better as an impulse, daily task, intermediate task, or alternative.
+
+Automated tests:
+
+- Classification helper tests.
+- Scoring default tests.
+- Compose UI classification label smoke test.
+
+Issue title:
+
+- `Classify quests by effort and value`
+
+#### Iteration 7: Weekly Planning
 
 Goal:
 
@@ -521,11 +636,10 @@ Goal:
 Scope:
 
 - Add planning screen.
-- Add Navigation Compose if not already added.
 - Seven day slots.
 - Assign existing quests as daily tasks.
 - Show `Should-do` and routine pools.
-- Keep editing minimal: select from existing seeded quests first.
+- Keep editing minimal: select from existing quests first.
 
 Manual acceptance:
 
@@ -542,34 +656,7 @@ Issue title:
 
 - `Plan daily tasks for the week`
 
-#### Iteration 6: Quest Creation and Classification
-
-Goal:
-
-- Let the user create custom quests with difficulty and importance.
-
-Scope:
-
-- Add quest creation screen or bottom sheet.
-- Fields: title, category, duration, difficulty, importance, energy cost, points.
-- Simple recommendation label: impulse/daily/intermediate/alternative.
-- Persist quests.
-
-Manual acceptance:
-
-- User can create a quest and see it appear in relevant lists.
-
-Automated tests:
-
-- Quest validation tests.
-- Classification helper tests.
-- Compose UI create quest flow.
-
-Issue title:
-
-- `Create and classify quests`
-
-#### Iteration 7: Alternatives and Lighter Versions
+#### Iteration 8: Alternatives and Lighter Versions
 
 Goal:
 
@@ -598,7 +685,7 @@ Issue title:
 
 - `Suggest alternatives for low-energy days`
 
-#### Iteration 8: History and Progress
+#### Iteration 9: History and Progress
 
 Goal:
 
@@ -608,6 +695,7 @@ Scope:
 
 - History screen.
 - Week summary.
+- Colored day levels: green, blue, purple, neutral.
 - Day traces list.
 - Category balance.
 - Points over time.
@@ -615,6 +703,7 @@ Scope:
 Manual acceptance:
 
 - User can see what made each recent day count.
+- User can distinguish minimum, strong, and very productive days by color.
 - Empty days are shown gently.
 
 Automated tests:
@@ -627,15 +716,17 @@ Issue title:
 
 - `Show weekly history and progress`
 
-#### Iteration 9: Rewards
+#### Iteration 10: Rewards
 
 Goal:
 
-- Add rewarding loops without turning rewards into permission.
+- Add configurable rewarding loops without turning rewards into permission.
 
 Scope:
 
 - Reward list.
+- Add and edit custom rewards.
+- Reward fields: title, description, cost, kind.
 - Claim reward with points.
 - Reward kinds: ritual, capsule, visual, experience, rest.
 - Claimed rewards history.
@@ -643,20 +734,22 @@ Scope:
 
 Manual acceptance:
 
+- User can create or edit a reward.
 - User can earn points and claim a reward.
 - Copy makes it clear rewards are celebratory, not restrictive.
 
 Automated tests:
 
+- Reward validation tests.
 - Reward affordability tests.
 - Claiming tests.
-- Compose UI reward claim flow.
+- Compose UI reward create/edit and claim flow.
 
 Issue title:
 
-- `Add rewards and capsules`
+- `Add custom rewards and capsules`
 
-#### Iteration 10: Local Schedule Preview
+#### Iteration 11: Local Schedule Preview
 
 Goal:
 
@@ -681,7 +774,7 @@ Issue title:
 
 - `Add local schedule preview`
 
-#### Iteration 11: Notifications and Reminders
+#### Iteration 12: Notifications and Reminders
 
 Goal:
 
@@ -709,7 +802,7 @@ Issue title:
 
 - `Add gentle local reminders`
 
-#### Iteration 12: Android Polish
+#### Iteration 13: Android Polish
 
 Goal:
 
