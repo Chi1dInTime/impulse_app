@@ -6,6 +6,7 @@ composeBom = "2026.04.01"
 espresso = "3.7.0"
 junit = "4.13.2"
 lifecycle = "2.10.0"
+kotlin = "2.3.21"
 testRunner = "1.7.0"
 
 [libraries]
@@ -25,3 +26,4 @@ test-runner = { module = "androidx.test:runner", version.ref = "testRunner" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
