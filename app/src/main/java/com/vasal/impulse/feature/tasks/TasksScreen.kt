@@ -39,6 +39,8 @@ import com.vasal.impulse.data.TaskItem
 import com.vasal.impulse.data.TaskKinds
 import com.vasal.impulse.data.TaskStore
 import com.vasal.impulse.data.toDraft
+import com.vasal.impulse.domain.QuestRecommendation
+import com.vasal.impulse.domain.QuestRecommender
 import com.vasal.impulse.ui.theme.DayGreen
 import com.vasal.impulse.ui.theme.ImpulseTheme
 import com.vasal.impulse.ui.theme.WarmBlueContainer
@@ -134,6 +136,13 @@ private fun TaskEditorCard(
     onCancel: () -> Unit,
     onSave: () -> Unit
 ) {
+    val recommendation = QuestRecommender.recommend(
+        importance = draft.importance,
+        difficulty = draft.difficulty,
+        energyCost = draft.energyCost,
+        durationMinutes = draft.durationMinutes
+    )
+
     Card(
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = WarmGreenContainer)
@@ -174,6 +183,17 @@ private fun TaskEditorCard(
                 options = TaskCategories,
                 selected = draft.category,
                 onSelected = { onDraftChange(draft.copy(category = it)) }
+            )
+            RecommendationCard(
+                recommendation = recommendation,
+                onApply = {
+                    onDraftChange(
+                        draft.copy(
+                            kind = recommendation.kind,
+                            points = recommendation.points
+                        )
+                    )
+                }
             )
             NumberStepper(
                 label = "Важность",
@@ -216,6 +236,49 @@ private fun TaskEditorCard(
                 TextButton(onClick = onCancel) {
                     Text("Отмена")
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecommendationCard(
+    recommendation: QuestRecommendation,
+    onApply: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = WarmSurface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Рекомендация",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${recommendation.kind} · ${recommendation.points} очков",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = recommendation.reason,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+                )
+            }
+            TextButton(onClick = onApply) {
+                Text("Применить")
             }
         }
     }

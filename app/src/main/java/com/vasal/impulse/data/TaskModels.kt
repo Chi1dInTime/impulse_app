@@ -1,5 +1,7 @@
 package com.vasal.impulse.data
 
+import com.vasal.impulse.domain.QuestRecommender
+
 data class TaskItem(
     val id: Long,
     val title: String,
@@ -22,7 +24,12 @@ data class TaskDraft(
     val difficulty: Int = 1,
     val importance: Int = 3,
     val energyCost: Int = 1,
-    val points: Int = 10,
+    val points: Int = QuestRecommender.recommend(
+        importance = importance,
+        difficulty = difficulty,
+        energyCost = energyCost,
+        durationMinutes = durationMinutes
+    ).points,
     val kind: String = TaskKinds.first()
 )
 
