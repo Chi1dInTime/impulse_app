@@ -151,11 +151,6 @@ private fun DayProgressCard(state: TodayUiState) {
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Text(
-                        text = "Зелёный минимум закрыт. Синий слой уже растёт поверх него.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
-                    )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
