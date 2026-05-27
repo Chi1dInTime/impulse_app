@@ -21,6 +21,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.vasal.impulse.data.RoomTodayProgressStore
+import com.vasal.impulse.data.RoomTaskStore
+import com.vasal.impulse.data.TaskStore
 import com.vasal.impulse.data.TodayProgressStore
 import com.vasal.impulse.data.local.ImpulseDatabase
 import com.vasal.impulse.domain.AppInfo
@@ -35,11 +37,18 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ImpulseApp() {
-    ImpulseApp(todayProgressStore = rememberRoomTodayProgressStore())
+    val database = rememberImpulseDatabase()
+    ImpulseApp(
+        todayProgressStore = rememberRoomTodayProgressStore(database),
+        taskStore = rememberRoomTaskStore(database)
+    )
 }
 
 @Composable
-fun ImpulseApp(todayProgressStore: TodayProgressStore) {
+fun ImpulseApp(
+    todayProgressStore: TodayProgressStore,
+    taskStore: TaskStore
+) {
     val pagerState = rememberPagerState(pageCount = { AppSection.entries.size })
     val coroutineScope = rememberCoroutineScope()
     val selectedSection = AppSection.entries[pagerState.currentPage]
@@ -70,6 +79,7 @@ fun ImpulseApp(todayProgressStore: TodayProgressStore) {
                 AppSectionContent(
                     selectedSection = AppSection.entries[page],
                     todayProgressStore = todayProgressStore,
+                    taskStore = taskStore,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -81,6 +91,7 @@ fun ImpulseApp(todayProgressStore: TodayProgressStore) {
 private fun AppSectionContent(
     selectedSection: AppSection,
     todayProgressStore: TodayProgressStore,
+    taskStore: TaskStore,
     modifier: Modifier = Modifier
 ) {
     when (selectedSection) {
@@ -88,7 +99,10 @@ private fun AppSectionContent(
             progressStore = todayProgressStore,
             modifier = modifier
         )
-        AppSection.Tasks -> TasksScreen(modifier = modifier)
+        AppSection.Tasks -> TasksScreen(
+            taskStore = taskStore,
+            modifier = modifier
+        )
         AppSection.Stats -> StatsScreen(modifier = modifier)
         AppSection.Rewards -> RewardsScreen(modifier = modifier)
     }
@@ -112,12 +126,6 @@ private fun ImpulseBottomBar(
                 onClick = { onSectionSelected(section) },
                 icon = {
                     Text(
-                        text = section.marker,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                    )
-                },
-                label = {
-                    Text(
                         text = section.label,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                     )
@@ -135,29 +143,41 @@ private fun ImpulseBottomBar(
 }
 
 private enum class AppSection(
-    val label: String,
-    val marker: String
+    val label: String
 ) {
-    Today(label = "Сегодня", marker = "С"),
-    Tasks(label = "Дела", marker = "Д"),
-    Stats(label = "Статистика", marker = "С"),
-    Rewards(label = "Награды", marker = "Н")
+    Today(label = "Сегодня"),
+    Tasks(label = "Дела"),
+    Stats(label = "Статистика"),
+    Rewards(label = "Награды")
 }
 
 @Composable
-private fun rememberRoomTodayProgressStore(): TodayProgressStore {
+private fun rememberImpulseDatabase(): ImpulseDatabase {
     val context = LocalContext.current.applicationContext
     return remember(context) {
-        RoomTodayProgressStore(
-            dao = ImpulseDatabase.getInstance(context).dailyProgressDao()
-        )
+        ImpulseDatabase.getInstance(context)
     }
 }
+
+@Composable
+private fun rememberRoomTodayProgressStore(database: ImpulseDatabase): TodayProgressStore =
+    remember(database) {
+        RoomTodayProgressStore(dao = database.dailyProgressDao())
+    }
+
+@Composable
+private fun rememberRoomTaskStore(database: ImpulseDatabase): TaskStore =
+    remember(database) {
+        RoomTaskStore(dao = database.questDao())
+    }
 
 @Preview(showBackground = true)
 @Composable
 private fun ImpulseAppPreview() {
     ImpulseTheme {
-        ImpulseApp()
+        ImpulseApp(
+            todayProgressStore = com.vasal.impulse.data.InMemoryTodayProgressStore(),
+            taskStore = com.vasal.impulse.data.InMemoryTaskStore()
+        )
     }
 }

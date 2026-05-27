@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import com.vasal.impulse.data.InMemoryTaskStore
 import com.vasal.impulse.data.InMemoryTodayProgressStore
 import com.vasal.impulse.ui.theme.ImpulseTheme
 import org.junit.Before
@@ -20,7 +22,10 @@ class ImpulseAppTest {
     fun setUp() {
         composeRule.setContent {
             ImpulseTheme {
-                ImpulseApp(todayProgressStore = InMemoryTodayProgressStore())
+                ImpulseApp(
+                    todayProgressStore = InMemoryTodayProgressStore(),
+                    taskStore = InMemoryTaskStore()
+                )
             }
         }
     }
@@ -67,5 +72,16 @@ class ImpulseAppTest {
         composeRule.onNodeWithText("Готово").assertIsDisplayed()
         composeRule.onNodeWithText("импульс выполнен").assertIsDisplayed()
         composeRule.onNodeWithText("День уже начал двигаться").assertIsDisplayed()
+    }
+
+    @Test
+    fun tasksSectionCreatesTask() {
+        composeRule.onNodeWithText("Дела").performClick()
+
+        composeRule.onNodeWithText("+").performClick()
+        composeRule.onNodeWithText("Название").performTextInput("Позвонить врачу")
+        composeRule.onNodeWithText("Сохранить").performClick()
+
+        composeRule.onNodeWithText("Позвонить врачу").assertIsDisplayed()
     }
 }
