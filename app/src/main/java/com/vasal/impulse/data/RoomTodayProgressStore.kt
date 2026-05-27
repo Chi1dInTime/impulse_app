@@ -28,7 +28,27 @@ class RoomTodayProgressStore(
             DailyProgressEntity(
                 date = todayKey,
                 points = currentPoints + points,
-                impulseCompleted = true
+                impulseCompleted = true,
+                dailyTaskCompleted = current?.dailyTaskCompleted ?: false,
+                traceTitle = current?.traceTitle
+            )
+        )
+    }
+
+    override suspend fun completeDailyTask(points: Int, title: String) {
+        val current = dao.getByDate(todayKey)
+        if (current?.dailyTaskCompleted == true) {
+            return
+        }
+
+        val currentPoints = current?.points ?: InitialTodayPoints
+        dao.upsert(
+            DailyProgressEntity(
+                date = todayKey,
+                points = currentPoints + points,
+                impulseCompleted = current?.impulseCompleted ?: false,
+                dailyTaskCompleted = true,
+                traceTitle = title
             )
         )
     }
@@ -37,5 +57,7 @@ class RoomTodayProgressStore(
 private fun DailyProgressEntity.toState(): TodayProgressState =
     TodayProgressState(
         points = points,
-        impulseCompleted = impulseCompleted
+        impulseCompleted = impulseCompleted,
+        dailyTaskCompleted = dailyTaskCompleted,
+        traceTitle = traceTitle
     )

@@ -35,6 +35,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vasal.impulse.data.InMemoryTodayProgressStore
+import com.vasal.impulse.data.InMemoryTaskStore
+import com.vasal.impulse.data.TaskItem
+import com.vasal.impulse.data.TaskStore
 import com.vasal.impulse.data.TodayProgressState
 import com.vasal.impulse.data.TodayProgressStore
 import com.vasal.impulse.domain.AppInfo
@@ -75,22 +78,36 @@ private val demoToday = TodayUiState(
 @Composable
 fun TodayScreen(
     progressStore: TodayProgressStore,
+    taskStore: TaskStore,
     modifier: Modifier = Modifier
 ) {
     val todayProgress by progressStore.todayProgress.collectAsStateWithLifecycle(
         initialValue = TodayProgressState()
     )
+    val tasks by taskStore.tasks.collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
     val dayProgress = DayProgressCalculator.calculate(todayProgress.points)
+    val dailyTask = tasks.dailyTaskOrFallback()
+    val todayState = demoToday.copy(dailyTask = dailyTask)
 
     TodayScreen(
-        state = demoToday,
+        state = todayState,
         points = todayProgress.points,
         dayProgress = dayProgress,
         impulseCompleted = todayProgress.impulseCompleted,
+        dailyTaskCompleted = todayProgress.dailyTaskCompleted,
+        traceTitle = todayProgress.traceTitle,
         onCompleteImpulse = {
             coroutineScope.launch {
                 progressStore.completeImpulse(demoToday.impulse.points)
+            }
+        },
+        onCompleteDailyTask = {
+            coroutineScope.launch {
+                progressStore.completeDailyTask(
+                    points = dailyTask.points,
+                    title = dailyTask.title
+                )
             }
         },
         modifier = modifier
@@ -103,7 +120,10 @@ private fun TodayScreen(
     points: Int,
     dayProgress: DayProgress,
     impulseCompleted: Boolean,
+    dailyTaskCompleted: Boolean,
+    traceTitle: String?,
     onCompleteImpulse: () -> Unit,
+    onCompleteDailyTask: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -116,24 +136,30 @@ private fun TodayScreen(
         DayProgressCard(
             points = points,
             progress = dayProgress,
-            impulseCompleted = impulseCompleted
+            impulseCompleted = impulseCompleted,
+            dailyTaskCompleted = dailyTaskCompleted
         )
         QuestActionCard(
             quest = state.impulse,
             containerColor = WarmAmber,
             primaryAction = if (impulseCompleted) "Готово" else "Сделано",
-            secondaryAction = "Заменить",
+            secondaryAction = null,
             completed = impulseCompleted,
+            completedLabel = "импульс выполнен",
             onPrimaryAction = onCompleteImpulse
         )
         QuestActionCard(
             quest = state.dailyTask,
             containerColor = WarmBlueContainer,
-            primaryAction = "Начать",
-            secondaryAction = "Замена",
-            completed = false,
-            onPrimaryAction = { }
+            primaryAction = if (dailyTaskCompleted) "Готово" else "Выполнено",
+            secondaryAction = null,
+            completed = dailyTaskCompleted,
+            completedLabel = "дело дня выполнено",
+            onPrimaryAction = onCompleteDailyTask
         )
+        if (dailyTaskCompleted && traceTitle != null) {
+            DayTraceCard(traceTitle = traceTitle)
+        }
         ExtraQuestsSection(state.extraQuests)
     }
 }
@@ -158,7 +184,8 @@ private fun TodayHeader() {
 private fun DayProgressCard(
     points: Int,
     progress: DayProgress,
-    impulseCompleted: Boolean
+    impulseCompleted: Boolean,
+    dailyTaskCompleted: Boolean
 ) {
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -180,7 +207,10 @@ private fun DayProgressCard(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = if (impulseCompleted) "День уже начал двигаться" else "День ждёт первого движения",
+                    text = dayProgressMessage(
+                        impulseCompleted = impulseCompleted,
+                        dailyTaskCompleted = dailyTaskCompleted
+                    ),
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
@@ -209,6 +239,16 @@ private fun DayProgressCard(
         }
     }
 }
+
+private fun dayProgressMessage(
+    impulseCompleted: Boolean,
+    dailyTaskCompleted: Boolean
+): String =
+    when {
+        dailyTaskCompleted -> "След дня уже появился"
+        impulseCompleted -> "День уже начал двигаться"
+        else -> "День ждёт первого движения"
+    }
 
 @Composable
 private fun LayeredDayMeter(
@@ -249,8 +289,9 @@ private fun QuestActionCard(
     quest: QuestCardUiState,
     containerColor: Color,
     primaryAction: String,
-    secondaryAction: String,
+    secondaryAction: String?,
     completed: Boolean,
+    completedLabel: String,
     onPrimaryAction: () -> Unit
 ) {
     Card(
@@ -274,7 +315,7 @@ private fun QuestActionCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 LabelChip(text = "+${quest.points} очков", strong = true)
-                LabelChip(text = if (completed) "импульс выполнен" else quest.support)
+                LabelChip(text = if (completed) completedLabel else quest.support)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
@@ -283,13 +324,42 @@ private fun QuestActionCard(
                 ) {
                     Text(primaryAction)
                 }
-                OutlinedButton(
-                    onClick = { },
-                    enabled = !completed
-                ) {
-                    Text(secondaryAction)
+                if (secondaryAction != null) {
+                    OutlinedButton(
+                        onClick = { },
+                        enabled = !completed
+                    ) {
+                        Text(secondaryAction)
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DayTraceCard(traceTitle: String) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = WarmSurface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SectionTitle(title = "След дня", trailing = "сохранён")
+            Text(
+                text = traceTitle,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Главное дело стало видимым в истории дня.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+            )
         }
     }
 }
@@ -394,10 +464,27 @@ private data class ExtraQuestUiState(
     val points: Int
 )
 
+private fun List<TaskItem>.dailyTaskOrFallback(): QuestCardUiState =
+    firstOrNull { it.kind == "дело дня" }
+        ?.toDailyQuestCard()
+        ?: demoToday.dailyTask
+
+private fun TaskItem.toDailyQuestCard(): QuestCardUiState =
+    QuestCardUiState(
+        label = "Дело дня",
+        title = title,
+        details = "$durationMinutes минут",
+        points = points,
+        support = "важн. $importance · сложн. $difficulty · сил $energyCost"
+    )
+
 @Preview(showBackground = true)
 @Composable
 private fun TodayScreenPreview() {
     ImpulseTheme {
-        TodayScreen(progressStore = InMemoryTodayProgressStore())
+        TodayScreen(
+            progressStore = InMemoryTodayProgressStore(),
+            taskStore = InMemoryTaskStore()
+        )
     }
 }

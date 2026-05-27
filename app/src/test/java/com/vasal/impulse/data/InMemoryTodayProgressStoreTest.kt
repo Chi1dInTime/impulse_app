@@ -18,4 +18,21 @@ class InMemoryTodayProgressStoreTest {
             store.todayProgress.first()
         )
     }
+
+    @Test
+    fun completeDailyTaskAddsPointsAndTraceOnlyOnce() = runBlocking {
+        val store = InMemoryTodayProgressStore()
+
+        store.completeDailyTask(points = 35, title = "Обновить резюме")
+        store.completeDailyTask(points = 35, title = "Обновить резюме")
+
+        assertEquals(
+            TodayProgressState(
+                points = 67,
+                dailyTaskCompleted = true,
+                traceTitle = "Обновить резюме"
+            ),
+            store.todayProgress.first()
+        )
+    }
 }

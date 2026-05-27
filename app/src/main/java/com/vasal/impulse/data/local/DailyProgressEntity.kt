@@ -7,5 +7,7 @@ import androidx.room.PrimaryKey
 data class DailyProgressEntity(
     @PrimaryKey val date: String,
     val points: Int,
-    val impulseCompleted: Boolean
+    val impulseCompleted: Boolean,
+    val dailyTaskCompleted: Boolean,
+    val traceTitle: String?
 )

@@ -12,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -54,6 +55,10 @@ fun ImpulseApp(
     val pagerState = rememberPagerState(pageCount = { AppSection.entries.size })
     val coroutineScope = rememberCoroutineScope()
     val selectedSection = AppSection.entries[pagerState.currentPage]
+
+    LaunchedEffect(taskStore) {
+        taskStore.seedDefaultsIfEmpty()
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -99,6 +104,7 @@ private fun AppSectionContent(
     when (selectedSection) {
         AppSection.Today -> TodayScreen(
             progressStore = todayProgressStore,
+            taskStore = taskStore,
             modifier = modifier
         )
         AppSection.Tasks -> TasksScreen(

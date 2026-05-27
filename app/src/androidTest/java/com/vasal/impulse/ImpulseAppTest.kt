@@ -75,6 +75,19 @@ class ImpulseAppTest {
     }
 
     @Test
+    fun completingDailyTaskCreatesTrace() {
+        composeRule.onNodeWithText("32 очка").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Выполнено").performClick()
+
+        composeRule.onNodeWithText("67 очка").assertIsDisplayed()
+        composeRule.onNodeWithText("дело дня выполнено").assertIsDisplayed()
+        composeRule.onNodeWithText("След дня").assertIsDisplayed()
+        composeRule.onNodeWithText("Обновить резюме").assertIsDisplayed()
+        composeRule.onNodeWithText("След дня уже появился").assertIsDisplayed()
+    }
+
+    @Test
     fun tasksSectionCreatesTask() {
         composeRule.onNodeWithText("Дела").performClick()
 

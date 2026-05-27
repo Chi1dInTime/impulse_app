@@ -6,4 +6,6 @@ interface TodayProgressStore {
     val todayProgress: Flow<TodayProgressState>
 
     suspend fun completeImpulse(points: Int)
+
+    suspend fun completeDailyTask(points: Int, title: String)
 }

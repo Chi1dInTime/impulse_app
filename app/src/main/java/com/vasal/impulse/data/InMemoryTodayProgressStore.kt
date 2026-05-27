@@ -24,4 +24,18 @@ class InMemoryTodayProgressStore(
             }
         }
     }
+
+    override suspend fun completeDailyTask(points: Int, title: String) {
+        state.update { current ->
+            if (current.dailyTaskCompleted) {
+                current
+            } else {
+                current.copy(
+                    points = current.points + points,
+                    dailyTaskCompleted = true,
+                    traceTitle = title
+                )
+            }
+        }
+    }
 }
