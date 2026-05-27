@@ -11,7 +11,7 @@ Turn the `Дела` section into a real persistent task list.
 - Seed starter tasks once when the list is empty.
 - Show the saved task list in `Дела`.
 - Let the user add and edit a task.
-- Include title, description, category, kind, duration, difficulty, importance, energy, and points.
+- Include title, description, category, kind, duration, difficulty, importance, required strength (`Силы`), and points.
 
 ## Current Behavior
 

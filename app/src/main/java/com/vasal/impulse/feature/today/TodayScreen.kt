@@ -56,7 +56,7 @@ private val demoToday = TodayUiState(
         title = "Разобрать кухню",
         details = "5 минут",
         points = 10,
-        support = "низкая энергия"
+        support = "мало сил"
     ),
     dailyTask = QuestCardUiState(
         label = "Дело дня",

@@ -7,9 +7,9 @@ Help the task editor suggest a useful task type and point value from task metada
 ## Scope
 
 - Add a pure `QuestRecommender`.
-- Suggest quest kind from duration, difficulty, importance, and energy.
+- Suggest quest kind from duration, difficulty, importance, and required strength.
 - Suggest points from the same fields.
-- Show the recommendation inside the `Дела` editor.
+- Show the recommendation inside the `Дела` editor with the UI label `Силы`.
 - Let the user apply the recommendation manually.
 - Keep manual kind and points edits possible.
 

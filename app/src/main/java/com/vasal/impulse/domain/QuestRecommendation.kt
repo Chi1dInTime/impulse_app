@@ -35,7 +35,7 @@ object QuestRecommender {
         return QuestRecommendation(
             kind = kind,
             points = points,
-            reason = "по важности $safeImportance, сложности $safeDifficulty, энергии $safeEnergy"
+            reason = "по важности $safeImportance, сложности $safeDifficulty, требует сил $safeEnergy"
         )
     }
 

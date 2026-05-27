@@ -208,7 +208,7 @@ private fun TaskEditorCard(
                 onValueChange = { onDraftChange(draft.copy(difficulty = it)) }
             )
             NumberStepper(
-                label = "Энергия",
+                label = "Силы",
                 value = draft.energyCost,
                 range = 1..5,
                 onValueChange = { onDraftChange(draft.copy(energyCost = it)) }
@@ -393,10 +393,10 @@ private fun TaskPreviewCard(
                 ) {
                     Text(task.kind, style = MaterialTheme.typography.labelMedium)
                     Text(task.category, style = MaterialTheme.typography.labelMedium)
-                    Text(
-                        text = "важн. ${task.importance} · сложн. ${task.difficulty} · энерг. ${task.energyCost}",
-                        style = MaterialTheme.typography.labelMedium
-                    )
+                        Text(
+                            text = "важн. ${task.importance} · сложн. ${task.difficulty} · сил ${task.energyCost}",
+                            style = MaterialTheme.typography.labelMedium
+                        )
                     Text("${task.durationMinutes} мин", style = MaterialTheme.typography.labelMedium)
                 }
             }
