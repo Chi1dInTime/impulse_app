@@ -9,4 +9,3 @@ class AppInfoTest {
         assertEquals("Импульс", AppInfo.name)
     }
 }
-

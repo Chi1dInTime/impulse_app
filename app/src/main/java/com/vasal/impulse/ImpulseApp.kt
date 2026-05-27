@@ -1,18 +1,10 @@
 package com.vasal.impulse
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,10 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.vasal.impulse.domain.AppInfo
+import com.vasal.impulse.feature.today.TodayScreen
 import com.vasal.impulse.ui.theme.ImpulseTheme
 
 @Composable
@@ -32,8 +23,10 @@ fun ImpulseApp() {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Scaffold { innerPadding ->
-            TodaySkeletonScreen(
+        Scaffold(
+            bottomBar = { ImpulseBottomBar() }
+        ) { innerPadding ->
+            TodayScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
@@ -44,98 +37,33 @@ fun ImpulseApp() {
 }
 
 @Composable
-private fun TodaySkeletonScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+private fun ImpulseBottomBar() {
+    val destinations = listOf(
+        BottomDestination(label = "Сегодня", marker = "С", selected = true),
+        BottomDestination(label = "Дела", marker = "Д"),
+        BottomDestination(label = "Статистика", marker = "С"),
+        BottomDestination(label = "Награды", marker = "Н")
+    )
+
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
-        Text(
-            text = AppInfo.name,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Сегодня можно начать с маленького движения.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
-        )
-
-        ProgressPreviewCard()
-        StarterCard()
-        DailyTaskCard()
-    }
-}
-
-@Composable
-private fun ProgressPreviewCard() {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Прогресс недели",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(text = "0 следов пока. Скоро здесь появится карта недели.")
-        }
-    }
-}
-
-@Composable
-private fun StarterCard() {
-    Card(shape = RoundedCornerShape(8.dp)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = "Импульс дня",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(text = "Разобрать кухню 5 минут")
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = { }) {
-                    Text("Сделано")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DailyTaskCard() {
-    Card(shape = RoundedCornerShape(8.dp)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = "Дело дня",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(text = "Запланируем первое важное дело на следующей итерации.")
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "Если сил мало, приложение предложит замену.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+        destinations.forEach { destination ->
+            NavigationBarItem(
+                selected = destination.selected,
+                onClick = { },
+                icon = { Text(destination.marker) },
+                label = { Text(destination.label) }
             )
         }
     }
 }
+
+private data class BottomDestination(
+    val label: String,
+    val marker: String,
+    val selected: Boolean = false
+)
 
 @Preview(showBackground = true)
 @Composable
@@ -144,4 +72,3 @@ private fun ImpulseAppPreview() {
         ImpulseApp()
     }
 }
-
