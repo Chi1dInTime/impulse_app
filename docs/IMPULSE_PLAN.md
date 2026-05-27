@@ -35,14 +35,18 @@ First playable milestones:
 
 1. Android project skeleton with one Compose screen.
 2. Today screen with layered day progress, impulse, daily task, and quest list.
-3. Complete an Impulse of the day and earn points.
-4. Save data locally with Room.
-5. Complete a Daily task and generate a Trace of the day.
-6. Quest list and editor with difficulty/importance/energy fields.
-7. Weekly planning screen.
-8. Alternative suggestions for low-energy days.
-9. Progress/history screen with colored day levels.
-10. Custom rewards and capsules.
+3. Clickable app sections shell: Today, Tasks, Stats, Rewards.
+4. Complete an Impulse of the day and earn points in temporary state.
+5. Save local activity data with Room.
+6. Persistent task list and editor with difficulty, importance, energy, and points.
+7. Complete a Daily task and generate a Trace of the day.
+8. Stats screen with colored weekly levels and day traces.
+9. Custom rewards and capsules.
+10. Weekly planning screen.
+11. Alternative suggestions for low-energy days.
+12. Local schedule preview.
+13. Gentle reminders.
+14. Android polish.
 
 ## Detailed Instructions for Agents
 
@@ -126,7 +130,7 @@ Preferred stack:
 - Language: Kotlin.
 - UI: Jetpack Compose.
 - Design system: Material 3 for Compose.
-- Navigation: Navigation Compose, added when the second real screen appears.
+- Navigation: start simple for the first shell; add Navigation Compose when real section navigation, nested editors, or back-stack behavior appear.
 - Architecture: unidirectional data flow from repositories/use cases to ViewModels to Compose UI state.
 - Persistence: Room for quests, plans, logs, traces, and rewards.
 - Settings: DataStore later for small preferences such as theme, first-run flags, and notification preferences.
@@ -421,7 +425,13 @@ Design direction:
 
 ### Iteration Plan
 
+The plan is intentionally ordered so the user sees the product shape early. First we make the app feel like a whole app, then make the Today loop interactive, then persist data, then fill each section with real behavior.
+
 #### Iteration 0: Repository and Android Tooling Setup
+
+Status:
+
+- Implemented.
 
 Goal:
 
@@ -429,14 +439,14 @@ Goal:
 
 Scope:
 
-- Initialize a Kotlin Android project.
-- Add Jetpack Compose and Material 3.
-- Add one `MainActivity`.
-- Add a basic Compose theme.
-- Add one smoke UI screen.
-- Add JUnit test setup.
-- Add Compose UI test setup.
-- Add README with Android Studio and Gradle commands.
+- Kotlin Android project structure.
+- Jetpack Compose and Material 3.
+- One `MainActivity`.
+- Basic Compose theme.
+- One smoke UI screen.
+- JUnit test setup.
+- Compose UI test setup.
+- Gradle wrapper and README instructions.
 
 Manual acceptance:
 
@@ -456,9 +466,13 @@ Issue title:
 
 #### Iteration 1: Today Screen Shell
 
+Status:
+
+- Implemented on branch `codex/01-today-screen-shell`.
+
 Goal:
 
-- Make the first real phone screen visible with demo data.
+- Make the first real Today screen visible with demo data.
 
 Scope:
 
@@ -467,7 +481,7 @@ Scope:
 - Impulse of the day card.
 - Daily task card.
 - Secondary quest list.
-- Bottom navigation shell with Today, Tasks, Stats, and Rewards labels.
+- Bottom navigation labels for Today, Tasks, Stats, and Rewards.
 - Demo data only, no persistence yet.
 
 Manual acceptance:
@@ -480,13 +494,45 @@ Manual acceptance:
 Automated tests:
 
 - Compose UI test for main labels.
-- Screenshot or emulator smoke check if available.
+- Android build and JVM test.
 
 Issue title:
 
 - `Add Today screen shell`
 
-#### Iteration 2: Complete Impulse of the Day
+#### Iteration 2: Core App Sections Shell
+
+Goal:
+
+- Make the bottom navigation real and let the user see all main sections early.
+
+Scope:
+
+- Make `Today`, `Tasks`, `Stats`, and `Rewards` selectable.
+- Add demo shell screens for Tasks, Stats, and Rewards.
+- Tasks shell shows a preview list and add/edit affordance, but no real editing yet.
+- Stats shell shows a demo week with green, blue, purple, and neutral days.
+- Rewards shell shows demo custom rewards and add/edit affordance, but no real claiming yet.
+- Remove overly explanatory copy from the Today progress card.
+- Keep all section data static/demo-only.
+
+Manual acceptance:
+
+- User can tap every bottom navigation item.
+- Every section communicates what it will become.
+- The app feels like a coherent product, not a single isolated Today screen.
+- No section pretends to save data yet.
+
+Automated tests:
+
+- Compose UI smoke tests for navigation labels.
+- Compose UI tests for switching between section shells.
+
+Issue title:
+
+- `Add core app section shells`
+
+#### Iteration 3: Complete Impulse of the Day
 
 Goal:
 
@@ -495,60 +541,132 @@ Goal:
 Scope:
 
 - Complete button for impulse.
-- Points update in UI state.
-- Visual completion state.
+- Points update in temporary UI state.
+- Layered day progress updates from points.
+- Visual completion state for the impulse card.
+- Short encouraging completion message.
 - Temporary in-memory activity log.
-- Encouraging completion message.
+
+Out of scope:
+
+- App restart persistence.
+- Real task editing.
+- Daily task completion.
 
 Manual acceptance:
 
 - Tapping complete marks the impulse done.
 - Points increase.
+- The day progress meter changes.
 - The day feels started.
 
 Automated tests:
 
-- Unit test for scoring helper.
-- ViewModel state test.
-- Compose UI test for completing impulse.
+- Unit test for day progress level calculation.
+- UI state test for completing an impulse.
+- Compose UI test for the impulse completion flow.
 
 Issue title:
 
 - `Complete impulse of the day`
 
-#### Iteration 3: Local Persistence with Room
+#### Iteration 4: Local Persistence with Room
 
 Goal:
 
-- Preserve quests, plans, and logs across app restarts.
+- Preserve the first useful local app state across restarts.
 
 Scope:
 
 - Add Room database.
-- Add entities and DAOs for quests, daily plans, and activity logs.
-- Add repository interface and implementation.
-- Seed default quests only on first run.
+- Add entities and DAOs for quests, daily plans, activity logs, day traces, and rewards.
+- Add repository interfaces and local implementations.
+- Seed default quests and starter rewards only on first run.
+- Persist completed impulse state and points for the current day.
 - Add a debug-only reset action if useful.
 
 Manual acceptance:
 
-- Complete an impulse, restart the app, and see it remains completed.
+- Complete an impulse, restart the app, and see the day state remains completed.
+- Seed data appears once and does not duplicate on restart.
 
 Automated tests:
 
 - DAO tests.
 - Repository tests.
-- ViewModel persistence test where practical.
+- Migration/schema smoke test if applicable.
+- ViewModel or state-holder persistence test where practical.
 
 Issue title:
 
 - `Persist local activity data with Room`
 
-#### Iteration 4: Daily Task Completion
+#### Iteration 5: Tasks Screen and Editor
 
 Goal:
 
-- Let the user complete the main planned action for the day.
+- Let the user manage reusable quests and tasks in the Tasks section.
+
+Scope:
+
+- Persistent task list.
+- Add task flow.
+- Edit task flow.
+- Fields: title, description, category, duration, difficulty, importance, energy cost, points, and kind.
+- Basic validation.
+- Today can still use seeded/demo selections until planning is implemented.
+
+Manual acceptance:
+
+- User can create a task.
+- User can edit importance and difficulty.
+- User can return to the task list and see saved changes after restart.
+- Today screen remains focused on action, not administration.
+
+Automated tests:
+
+- Quest validation tests.
+- DAO/repository tests for task creation and update.
+- Compose UI tests for create/edit flow.
+
+Issue title:
+
+- `Add task list and editor`
+
+#### Iteration 6: Quest Classification and Point Defaults
+
+Goal:
+
+- Use task metadata to make quests easier to reason about and suggest later.
+
+Scope:
+
+- Classification helper for impulse, daily task, intermediate task, alternative, routine, and flexible quest.
+- Suggested default points from importance, difficulty, duration, and energy cost.
+- Show a recommendation label in the task editor.
+- Let the user override points manually.
+
+Manual acceptance:
+
+- Creating or editing a task shows a useful recommendation.
+- The recommendation feels helpful, not controlling.
+- User can still override values.
+
+Automated tests:
+
+- Classification helper tests.
+- Default point calculation tests.
+- Compose UI smoke test for recommendation labels.
+
+Issue title:
+
+- `Classify quests by effort and value`
+
+#### Iteration 7: Daily Task Completion and Day Trace
+
+Goal:
+
+- Let the user complete the main planned action and create the first real trace of the day.
 
 Scope:
 
@@ -556,186 +674,77 @@ Scope:
 - Daily task points and bonus.
 - Day status update.
 - First version of day trace generation.
+- Trace stores whether the result matched the planned task.
 
 Manual acceptance:
 
 - Completing the daily task creates a visible trace for today.
+- The day progress meter updates.
+- Copy stays encouraging and non-shaming.
 
 Automated tests:
 
 - Scoring tests for daily bonus.
 - Trace generation tests.
+- Repository tests for saved traces.
 - Compose UI test for completing daily task.
 
 Issue title:
 
 - `Complete daily task and create day trace`
 
-#### Iteration 5: Task List and Editor
+#### Iteration 8: Stats Screen with Real Progress
 
 Goal:
 
-- Let the user manage reusable quests and tasks.
+- Make progress visible across days and weeks using persisted logs and traces.
 
 Scope:
 
-- Add Tasks screen.
-- Add quest/task list with search or category filters.
-- Add task creation and editing.
-- Fields: title, category, duration, difficulty, importance, energy cost, points, and kind.
-- Keep persistence if Room already exists by this iteration.
-
-Manual acceptance:
-
-- User can create a task and see it in the task list.
-- User can edit importance and difficulty.
-- Today screen remains focused on action, not task administration.
-
-Automated tests:
-
-- Quest validation tests.
-- ViewModel task list tests.
-- Compose UI create/edit task flow.
-
-Issue title:
-
-- `Add task list and editor`
-
-#### Iteration 6: Quest Classification
-
-Goal:
-
-- Classify quests using difficulty, importance, duration, and energy.
-
-Scope:
-
-- Simple recommendation label: impulse/daily/intermediate/alternative.
-- Suggested default points.
-- Suggested use cases for Today screen.
-
-Manual acceptance:
-
-- User can see whether a quest is better as an impulse, daily task, intermediate task, or alternative.
-
-Automated tests:
-
-- Classification helper tests.
-- Scoring default tests.
-- Compose UI classification label smoke test.
-
-Issue title:
-
-- `Classify quests by effort and value`
-
-#### Iteration 7: Weekly Planning
-
-Goal:
-
-- Let the user plan the main actions for the week.
-
-Scope:
-
-- Add planning screen.
-- Seven day slots.
-- Assign existing quests as daily tasks.
-- Show `Should-do` and routine pools.
-- Keep editing minimal: select from existing quests first.
-
-Manual acceptance:
-
-- User can assign a daily task to each day of the week.
-- Today screen reflects today's selected task.
-
-Automated tests:
-
-- Date/week helper tests.
-- ViewModel planning state tests.
-- Compose UI test for assigning a task.
-
-Issue title:
-
-- `Plan daily tasks for the week`
-
-#### Iteration 8: Alternatives and Lighter Versions
-
-Goal:
-
-- Help the user adapt when the planned daily task is too hard.
-
-Scope:
-
-- Energy selector: low/medium/high.
-- Alternative suggestions from quest pool.
-- Bottom sheet for replacements.
-- Complete an alternative instead of the planned daily task.
-- Trace records `alternative`.
-
-Manual acceptance:
-
-- User can say energy is low and choose a replacement.
-- The app records that the day was counted by alternative.
-
-Automated tests:
-
-- Suggestion helper tests.
-- Trace result tests.
-- Compose UI alternative completion flow.
-
-Issue title:
-
-- `Suggest alternatives for low-energy days`
-
-#### Iteration 9: History and Progress
-
-Goal:
-
-- Make progress visible across days and weeks.
-
-Scope:
-
-- History screen.
+- Real Stats screen.
 - Week summary.
 - Colored day levels: green, blue, purple, neutral.
 - Day traces list.
 - Category balance.
 - Points over time.
+- Empty days shown gently.
 
 Manual acceptance:
 
-- User can see what made each recent day count.
+- User can see what made recent days count.
 - User can distinguish minimum, strong, and very productive days by color.
-- Empty days are shown gently.
+- Empty days are understandable without shame.
 
 Automated tests:
 
 - Aggregation helper tests.
-- ViewModel tests for summary states.
-- Compose UI history navigation flow.
+- ViewModel/state tests for summary states.
+- Compose UI tests for Stats screen states.
 
 Issue title:
 
 - `Show weekly history and progress`
 
-#### Iteration 10: Rewards
+#### Iteration 9: Custom Rewards and Capsules
 
 Goal:
 
-- Add configurable rewarding loops without turning rewards into permission.
+- Add configurable rewards without turning rewards into permission.
 
 Scope:
 
-- Reward list.
+- Rewards screen backed by persisted data.
 - Add and edit custom rewards.
 - Reward fields: title, description, cost, kind.
 - Claim reward with points.
 - Reward kinds: ritual, capsule, visual, experience, rest.
 - Claimed rewards history.
-- Simple capsule reveal animation.
+- Simple capsule reveal or claim celebration.
 
 Manual acceptance:
 
 - User can create or edit a reward.
-- User can earn points and claim a reward.
+- User can claim a reward with points.
 - Copy makes it clear rewards are celebratory, not restrictive.
 
 Automated tests:
@@ -749,7 +758,69 @@ Issue title:
 
 - `Add custom rewards and capsules`
 
-#### Iteration 11: Local Schedule Preview
+#### Iteration 10: Weekly Planning
+
+Goal:
+
+- Let the user plan the main actions for the week.
+
+Scope:
+
+- Planning screen.
+- Seven day slots.
+- Assign existing quests as daily tasks.
+- Show `Should-do` and routine pools.
+- Today screen reflects today's selected task.
+- Keep editing minimal: select from existing quests first.
+
+Manual acceptance:
+
+- User can assign a daily task to each day of the week.
+- Today screen reflects today's selected task.
+- The planning flow feels optional, not mandatory.
+
+Automated tests:
+
+- Date/week helper tests.
+- Planning repository tests.
+- ViewModel/state tests for weekly planning.
+- Compose UI test for assigning a task.
+
+Issue title:
+
+- `Plan daily tasks for the week`
+
+#### Iteration 11: Alternatives and Lighter Versions
+
+Goal:
+
+- Help the user adapt when the planned daily task is too hard.
+
+Scope:
+
+- Energy selector: low, medium, high.
+- Alternative suggestions from quest pool.
+- Bottom sheet for replacements.
+- Complete an alternative instead of the planned daily task.
+- Trace records `alternative` or `rescued`.
+
+Manual acceptance:
+
+- User can say energy is low and choose a replacement.
+- The app records that the day counted by alternative.
+- The app does not frame the change as failure.
+
+Automated tests:
+
+- Suggestion helper tests.
+- Trace result tests.
+- Compose UI alternative completion flow.
+
+Issue title:
+
+- `Suggest alternatives for low-energy days`
+
+#### Iteration 12: Local Schedule Preview
 
 Goal:
 
@@ -760,6 +831,7 @@ Scope:
 - Calendar-style weekly view.
 - Scheduled activities as local events.
 - Today screen can mention upcoming local events.
+- Local-only editing.
 
 Manual acceptance:
 
@@ -768,17 +840,18 @@ Manual acceptance:
 Automated tests:
 
 - Schedule helper tests.
+- Repository tests for local events.
 - Compose UI event creation flow.
 
 Issue title:
 
 - `Add local schedule preview`
 
-#### Iteration 12: Notifications and Reminders
+#### Iteration 13: Gentle Reminders
 
 Goal:
 
-- Add gentle reminders without becoming annoying.
+- Add reminders without becoming annoying.
 
 Scope:
 
@@ -787,22 +860,24 @@ Scope:
 - Morning impulse reminder.
 - Optional daily task reminder.
 - DataStore for notification preferences.
+- Gentle reminder copy.
 
 Manual acceptance:
 
-- User can enable/disable reminders.
-- Reminder copy is gentle.
+- User can enable and disable reminders.
+- Reminder copy feels supportive.
+- The app works normally if notification permission is denied.
 
 Automated tests:
 
 - Settings repository tests.
-- ViewModel tests for notification preference state.
+- ViewModel/state tests for notification preferences.
 
 Issue title:
 
 - `Add gentle local reminders`
 
-#### Iteration 13: Android Polish
+#### Iteration 14: Android Polish
 
 Goal:
 
@@ -810,10 +885,11 @@ Goal:
 
 Scope:
 
-- App icon placeholder.
+- App icon polish.
 - Dark theme polish.
 - Empty states.
 - Accessibility pass.
+- Reduced explanatory copy where the UI can speak for itself.
 - Small haptics for completed actions if appropriate.
 - Backup/export discussion if local data becomes valuable.
 
@@ -822,6 +898,7 @@ Manual acceptance:
 - Primary flows feel polished on phone.
 - Screen reader labels exist for primary actions.
 - Dark theme is usable.
+- Text is concise and does not crowd the cards.
 
 Automated tests:
 
