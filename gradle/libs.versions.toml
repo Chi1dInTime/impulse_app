@@ -5,8 +5,10 @@ androidxJunit = "1.3.0"
 composeBom = "2026.04.01"
 espresso = "3.7.0"
 junit = "4.13.2"
+ksp = "2.3.6"
 lifecycle = "2.10.0"
 kotlin = "2.3.21"
+room = "2.8.4"
 testRunner = "1.7.0"
 
 [libraries]
@@ -22,8 +24,12 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
 junit = { module = "junit:junit", version.ref = "junit" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 test-runner = { module = "androidx.test:runner", version.ref = "testRunner" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

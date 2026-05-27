@@ -1,15 +1,29 @@
 package com.vasal.impulse
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.vasal.impulse.data.InMemoryTodayProgressStore
+import com.vasal.impulse.ui.theme.ImpulseTheme
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class ImpulseAppTest {
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createComposeRule()
+
+    @Before
+    fun setUp() {
+        composeRule.setContent {
+            ImpulseTheme {
+                ImpulseApp(todayProgressStore = InMemoryTodayProgressStore())
+            }
+        }
+    }
 
     @Test
     fun todayScreenShowsShellLabels() {
@@ -27,15 +41,19 @@ class ImpulseAppTest {
     @Test
     fun bottomNavigationSwitchesSectionShells() {
         composeRule.onNodeWithText("Дела").performClick()
+        composeRule.onNodeWithContentDescription("Раздел Дела").assertIsSelected()
         composeRule.onNodeWithText("Список дел").assertIsDisplayed()
 
         composeRule.onNodeWithText("Статистика").performClick()
+        composeRule.onNodeWithContentDescription("Раздел Статистика").assertIsSelected()
         composeRule.onNodeWithText("Прогресс недели").assertIsDisplayed()
 
         composeRule.onNodeWithText("Награды").performClick()
+        composeRule.onNodeWithContentDescription("Раздел Награды").assertIsSelected()
         composeRule.onNodeWithText("Настрой свои награды под себя.").assertIsDisplayed()
 
         composeRule.onNodeWithText("Сегодня").performClick()
+        composeRule.onNodeWithContentDescription("Раздел Сегодня").assertIsSelected()
         composeRule.onNodeWithText("Прогресс дня").assertIsDisplayed()
     }
 

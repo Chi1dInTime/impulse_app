@@ -22,9 +22,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +33,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vasal.impulse.data.InMemoryTodayProgressStore
+import com.vasal.impulse.data.TodayProgressState
+import com.vasal.impulse.data.TodayProgressStore
 import com.vasal.impulse.domain.AppInfo
 import com.vasal.impulse.domain.DayProgress
 import com.vasal.impulse.domain.DayProgressCalculator
@@ -46,9 +48,9 @@ import com.vasal.impulse.ui.theme.WarmAmber
 import com.vasal.impulse.ui.theme.WarmBlueContainer
 import com.vasal.impulse.ui.theme.WarmGreenContainer
 import com.vasal.impulse.ui.theme.WarmSurface
+import kotlinx.coroutines.launch
 
 private val demoToday = TodayUiState(
-    basePoints = 32,
     impulse = QuestCardUiState(
         label = "Импульс дня",
         title = "Разобрать кухню",
@@ -71,17 +73,26 @@ private val demoToday = TodayUiState(
 )
 
 @Composable
-fun TodayScreen(modifier: Modifier = Modifier) {
-    var impulseCompleted by rememberSaveable { mutableStateOf(false) }
-    val points = demoToday.basePoints + if (impulseCompleted) demoToday.impulse.points else 0
-    val dayProgress = DayProgressCalculator.calculate(points)
+fun TodayScreen(
+    progressStore: TodayProgressStore,
+    modifier: Modifier = Modifier
+) {
+    val todayProgress by progressStore.todayProgress.collectAsStateWithLifecycle(
+        initialValue = TodayProgressState()
+    )
+    val coroutineScope = rememberCoroutineScope()
+    val dayProgress = DayProgressCalculator.calculate(todayProgress.points)
 
     TodayScreen(
         state = demoToday,
-        points = points,
+        points = todayProgress.points,
         dayProgress = dayProgress,
-        impulseCompleted = impulseCompleted,
-        onCompleteImpulse = { impulseCompleted = true },
+        impulseCompleted = todayProgress.impulseCompleted,
+        onCompleteImpulse = {
+            coroutineScope.launch {
+                progressStore.completeImpulse(demoToday.impulse.points)
+            }
+        },
         modifier = modifier
     )
 }
@@ -364,7 +375,6 @@ private fun LabelChip(text: String, strong: Boolean = false) {
 }
 
 private data class TodayUiState(
-    val basePoints: Int,
     val impulse: QuestCardUiState,
     val dailyTask: QuestCardUiState,
     val extraQuests: List<ExtraQuestUiState>
@@ -388,6 +398,6 @@ private data class ExtraQuestUiState(
 @Composable
 private fun TodayScreenPreview() {
     ImpulseTheme {
-        TodayScreen()
+        TodayScreen(progressStore = InMemoryTodayProgressStore())
     }
 }
