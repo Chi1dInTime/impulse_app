@@ -38,4 +38,16 @@ class ImpulseAppTest {
         composeRule.onNodeWithText("Сегодня").performClick()
         composeRule.onNodeWithText("Прогресс дня").assertIsDisplayed()
     }
+
+    @Test
+    fun completingImpulseUpdatesTodayState() {
+        composeRule.onNodeWithText("32 очка").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Сделано").performClick()
+
+        composeRule.onNodeWithText("42 очка").assertIsDisplayed()
+        composeRule.onNodeWithText("Готово").assertIsDisplayed()
+        composeRule.onNodeWithText("импульс выполнен").assertIsDisplayed()
+        composeRule.onNodeWithText("День уже начал двигаться").assertIsDisplayed()
+    }
 }

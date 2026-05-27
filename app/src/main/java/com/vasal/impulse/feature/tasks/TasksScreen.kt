@@ -17,9 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.vasal.impulse.ui.theme.DayGreen
 import com.vasal.impulse.ui.theme.ImpulseTheme
 import com.vasal.impulse.ui.theme.WarmBlueContainer
 import com.vasal.impulse.ui.theme.WarmSurface
@@ -65,7 +67,11 @@ fun TasksScreen(modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
                     )
                 }
-                FloatingActionButton(onClick = { }) {
+                FloatingActionButton(
+                    onClick = { },
+                    containerColor = DayGreen,
+                    contentColor = Color.White
+                ) {
                     Text(
                         text = "+",
                         style = MaterialTheme.typography.headlineSmall,

@@ -21,6 +21,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.vasal.impulse.domain.AppInfo
+import com.vasal.impulse.domain.DayProgress
+import com.vasal.impulse.domain.DayProgressCalculator
 import com.vasal.impulse.ui.theme.DayBlue
 import com.vasal.impulse.ui.theme.DayGreen
 import com.vasal.impulse.ui.theme.DayPurple
@@ -42,11 +48,7 @@ import com.vasal.impulse.ui.theme.WarmGreenContainer
 import com.vasal.impulse.ui.theme.WarmSurface
 
 private val demoToday = TodayUiState(
-    points = 42,
-    pointsUntilNextLevel = 8,
-    minimumProgress = 1f,
-    strongProgress = 0.72f,
-    superProgress = 0f,
+    basePoints = 32,
     impulse = QuestCardUiState(
         label = "Импульс дня",
         title = "Разобрать кухню",
@@ -70,8 +72,16 @@ private val demoToday = TodayUiState(
 
 @Composable
 fun TodayScreen(modifier: Modifier = Modifier) {
+    var impulseCompleted by rememberSaveable { mutableStateOf(false) }
+    val points = demoToday.basePoints + if (impulseCompleted) demoToday.impulse.points else 0
+    val dayProgress = DayProgressCalculator.calculate(points)
+
     TodayScreen(
         state = demoToday,
+        points = points,
+        dayProgress = dayProgress,
+        impulseCompleted = impulseCompleted,
+        onCompleteImpulse = { impulseCompleted = true },
         modifier = modifier
     )
 }
@@ -79,6 +89,10 @@ fun TodayScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun TodayScreen(
     state: TodayUiState,
+    points: Int,
+    dayProgress: DayProgress,
+    impulseCompleted: Boolean,
+    onCompleteImpulse: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -88,18 +102,26 @@ private fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         TodayHeader()
-        DayProgressCard(state)
+        DayProgressCard(
+            points = points,
+            progress = dayProgress,
+            impulseCompleted = impulseCompleted
+        )
         QuestActionCard(
             quest = state.impulse,
             containerColor = WarmAmber,
-            primaryAction = "Сделано",
-            secondaryAction = "Заменить"
+            primaryAction = if (impulseCompleted) "Готово" else "Сделано",
+            secondaryAction = "Заменить",
+            completed = impulseCompleted,
+            onPrimaryAction = onCompleteImpulse
         )
         QuestActionCard(
             quest = state.dailyTask,
             containerColor = WarmBlueContainer,
             primaryAction = "Начать",
-            secondaryAction = "Замена"
+            secondaryAction = "Замена",
+            completed = false,
+            onPrimaryAction = { }
         )
         ExtraQuestsSection(state.extraQuests)
     }
@@ -122,7 +144,11 @@ private fun TodayHeader() {
 }
 
 @Composable
-private fun DayProgressCard(state: TodayUiState) {
+private fun DayProgressCard(
+    points: Int,
+    progress: DayProgress,
+    impulseCompleted: Boolean
+) {
     Card(
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = WarmGreenContainer)
@@ -135,35 +161,31 @@ private fun DayProgressCard(state: TodayUiState) {
         ) {
             SectionTitle(
                 title = "Прогресс дня",
-                trailing = "${state.points} очка"
+                trailing = "$points очка"
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Column(
+                Text(
+                    text = if (impulseCompleted) "День уже начал двигаться" else "День ждёт первого движения",
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = "День уже набрал ход",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "до синего +${state.pointsUntilNextLevel}",
+                    text = progress.pointsUntilNextLevel?.let { "ещё +$it" } ?: "супер",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     textAlign = TextAlign.End
                 )
             }
             LayeredDayMeter(
-                minimumProgress = state.minimumProgress,
-                strongProgress = state.strongProgress,
-                superProgress = state.superProgress
+                minimumProgress = progress.minimumProgress,
+                strongProgress = progress.strongProgress,
+                superProgress = progress.superProgress
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -216,7 +238,9 @@ private fun QuestActionCard(
     quest: QuestCardUiState,
     containerColor: Color,
     primaryAction: String,
-    secondaryAction: String
+    secondaryAction: String,
+    completed: Boolean,
+    onPrimaryAction: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -239,13 +263,19 @@ private fun QuestActionCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 LabelChip(text = "+${quest.points} очков", strong = true)
-                LabelChip(text = quest.support)
+                LabelChip(text = if (completed) "импульс выполнен" else quest.support)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = { }) {
+                Button(
+                    onClick = onPrimaryAction,
+                    enabled = !completed
+                ) {
                     Text(primaryAction)
                 }
-                OutlinedButton(onClick = { }) {
+                OutlinedButton(
+                    onClick = { },
+                    enabled = !completed
+                ) {
                     Text(secondaryAction)
                 }
             }
@@ -334,11 +364,7 @@ private fun LabelChip(text: String, strong: Boolean = false) {
 }
 
 private data class TodayUiState(
-    val points: Int,
-    val pointsUntilNextLevel: Int,
-    val minimumProgress: Float,
-    val strongProgress: Float,
-    val superProgress: Float,
+    val basePoints: Int,
     val impulse: QuestCardUiState,
     val dailyTask: QuestCardUiState,
     val extraQuests: List<ExtraQuestUiState>
