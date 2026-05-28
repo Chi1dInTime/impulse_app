@@ -88,6 +88,17 @@ class ImpulseAppTest {
     }
 
     @Test
+    fun statsReflectsCompletedDailyTask() {
+        composeRule.onNodeWithText("Выполнено").performClick()
+
+        composeRule.onNodeWithText("Статистика").performClick()
+
+        composeRule.onNodeWithText("67 очков").assertIsDisplayed()
+        composeRule.onNodeWithText("Обновить резюме").assertIsDisplayed()
+        composeRule.onNodeWithText("дело дня выполнено").assertIsDisplayed()
+    }
+
+    @Test
     fun tasksSectionCreatesTask() {
         composeRule.onNodeWithText("Дела").performClick()
 

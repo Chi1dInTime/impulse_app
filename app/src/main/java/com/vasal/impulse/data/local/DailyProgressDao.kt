@@ -11,6 +11,9 @@ interface DailyProgressDao {
     @Query("SELECT * FROM daily_progress WHERE date = :date LIMIT 1")
     fun observeByDate(date: String): Flow<DailyProgressEntity?>
 
+    @Query("SELECT * FROM daily_progress ORDER BY date DESC")
+    fun observeAll(): Flow<List<DailyProgressEntity>>
+
     @Query("SELECT * FROM daily_progress WHERE date = :date LIMIT 1")
     suspend fun getByDate(date: String): DailyProgressEntity?
 

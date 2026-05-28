@@ -16,6 +16,8 @@ class RoomTodayProgressStore(
         dao.observeByDate(todayKey).map { entity ->
             entity?.toState() ?: TodayProgressState()
         }
+    override val dayHistory: Flow<List<DayProgressHistoryItem>> =
+        dao.observeAll().map { entries -> entries.map { it.toHistoryItem() } }
 
     override suspend fun completeImpulse(points: Int) {
         val current = dao.getByDate(todayKey)
@@ -56,6 +58,15 @@ class RoomTodayProgressStore(
 
 private fun DailyProgressEntity.toState(): TodayProgressState =
     TodayProgressState(
+        points = points,
+        impulseCompleted = impulseCompleted,
+        dailyTaskCompleted = dailyTaskCompleted,
+        traceTitle = traceTitle
+    )
+
+private fun DailyProgressEntity.toHistoryItem(): DayProgressHistoryItem =
+    DayProgressHistoryItem(
+        date = date,
         points = points,
         impulseCompleted = impulseCompleted,
         dailyTaskCompleted = dailyTaskCompleted,

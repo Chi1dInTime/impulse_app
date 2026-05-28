@@ -7,4 +7,12 @@ data class TodayProgressState(
     val traceTitle: String? = null
 )
 
+data class DayProgressHistoryItem(
+    val date: String,
+    val points: Int,
+    val impulseCompleted: Boolean,
+    val dailyTaskCompleted: Boolean,
+    val traceTitle: String?
+)
+
 const val InitialTodayPoints = 32

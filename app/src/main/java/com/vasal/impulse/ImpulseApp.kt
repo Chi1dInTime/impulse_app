@@ -111,7 +111,10 @@ private fun AppSectionContent(
             taskStore = taskStore,
             modifier = modifier
         )
-        AppSection.Stats -> StatsScreen(modifier = modifier)
+        AppSection.Stats -> StatsScreen(
+            progressStore = todayProgressStore,
+            modifier = modifier
+        )
         AppSection.Rewards -> RewardsScreen(modifier = modifier)
     }
 }
