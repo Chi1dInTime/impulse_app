@@ -9,5 +9,7 @@ data class DailyProgressEntity(
     val points: Int,
     val impulseCompleted: Boolean,
     val dailyTaskCompleted: Boolean,
-    val traceTitle: String?
+    val traceTitle: String?,
+    val completedExtraQuestIds: String,
+    val completedExtraQuestTitles: String
 )

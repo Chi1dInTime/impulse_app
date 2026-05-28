@@ -48,10 +48,24 @@ class InMemoryTodayProgressStore(
             }
         }
     }
+
+    override suspend fun completeExtraQuest(taskId: Long, title: String, points: Int) {
+        state.update { current ->
+            if (taskId in current.completedExtraQuestIds) {
+                current
+            } else {
+                current.copy(
+                    points = current.points + points,
+                    completedExtraQuestIds = current.completedExtraQuestIds + taskId,
+                    completedExtraQuestTitles = current.completedExtraQuestTitles + title
+                )
+            }
+        }
+    }
 }
 
 private fun TodayProgressState.hasVisibleProgress(): Boolean =
-    impulseCompleted || dailyTaskCompleted || traceTitle != null
+    impulseCompleted || dailyTaskCompleted || traceTitle != null || completedExtraQuestTitles.isNotEmpty()
 
 private fun TodayProgressState.toHistoryItem(date: String): DayProgressHistoryItem =
     DayProgressHistoryItem(
@@ -59,5 +73,6 @@ private fun TodayProgressState.toHistoryItem(date: String): DayProgressHistoryIt
         points = points,
         impulseCompleted = impulseCompleted,
         dailyTaskCompleted = dailyTaskCompleted,
-        traceTitle = traceTitle
+        traceTitle = traceTitle,
+        completedExtraQuestTitles = completedExtraQuestTitles
     )

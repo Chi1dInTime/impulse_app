@@ -69,9 +69,9 @@ private val demoToday = TodayUiState(
         support = "Лёгкая версия: открыть файл и поправить одну строку."
     ),
     extraQuests = listOf(
-        ExtraQuestUiState("Прогулка 10 минут", "тело · легко", 8),
-        ExtraQuestUiState("Постирать вещи", "дом · средне", 12),
-        ExtraQuestUiState("Посмотреть фильм осознанно", "восстановление", 10)
+        ExtraQuestUiState(1001, "Прогулка 10 минут", "тело · легко", 8),
+        ExtraQuestUiState(1002, "Постирать вещи", "дом · средне", 12),
+        ExtraQuestUiState(1003, "Посмотреть фильм осознанно", "восстановление", 10)
     )
 )
 
@@ -88,7 +88,11 @@ fun TodayScreen(
     val coroutineScope = rememberCoroutineScope()
     val dayProgress = DayProgressCalculator.calculate(todayProgress.points)
     val dailyTask = tasks.dailyTaskOrFallback()
-    val todayState = demoToday.copy(dailyTask = dailyTask)
+    val extraQuests = tasks.extraQuestCards(todayProgress.completedExtraQuestIds)
+    val todayState = demoToday.copy(
+        dailyTask = dailyTask,
+        extraQuests = extraQuests
+    )
 
     TodayScreen(
         state = todayState,
@@ -110,6 +114,15 @@ fun TodayScreen(
                 )
             }
         },
+        onCompleteExtraQuest = { quest ->
+            coroutineScope.launch {
+                progressStore.completeExtraQuest(
+                    taskId = quest.id,
+                    title = quest.title,
+                    points = quest.points
+                )
+            }
+        },
         modifier = modifier
     )
 }
@@ -124,6 +137,7 @@ private fun TodayScreen(
     traceTitle: String?,
     onCompleteImpulse: () -> Unit,
     onCompleteDailyTask: () -> Unit,
+    onCompleteExtraQuest: (ExtraQuestUiState) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -160,7 +174,10 @@ private fun TodayScreen(
         if (dailyTaskCompleted && traceTitle != null) {
             DayTraceCard(traceTitle = traceTitle)
         }
-        ExtraQuestsSection(state.extraQuests)
+        ExtraQuestsSection(
+            quests = state.extraQuests,
+            onCompleteQuest = onCompleteExtraQuest
+        )
     }
 }
 
@@ -365,7 +382,10 @@ private fun DayTraceCard(traceTitle: String) {
 }
 
 @Composable
-private fun ExtraQuestsSection(quests: List<ExtraQuestUiState>) {
+private fun ExtraQuestsSection(
+    quests: List<ExtraQuestUiState>,
+    onCompleteQuest: (ExtraQuestUiState) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionTitle(title = "Ещё можно", trailing = "${quests.size} квеста")
         quests.forEach { quest ->
@@ -392,12 +412,20 @@ private fun ExtraQuestsSection(quests: List<ExtraQuestUiState>) {
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f)
                         )
                     }
-                    Text(
-                        text = "+${quest.points}",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = DayGreen,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "+${quest.points}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = DayGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Button(
+                            onClick = { onCompleteQuest(quest) },
+                            enabled = !quest.completed
+                        ) {
+                            Text(if (quest.completed) "Готово" else "Сделано")
+                        }
+                    }
                 }
             }
         }
@@ -459,9 +487,11 @@ private data class QuestCardUiState(
 )
 
 private data class ExtraQuestUiState(
+    val id: Long,
     val title: String,
     val subtitle: String,
-    val points: Int
+    val points: Int,
+    val completed: Boolean = false
 )
 
 private fun List<TaskItem>.dailyTaskOrFallback(): QuestCardUiState =
@@ -477,6 +507,20 @@ private fun TaskItem.toDailyQuestCard(): QuestCardUiState =
         points = points,
         support = "важн. $importance · сложн. $difficulty · сил $energyCost"
     )
+
+private fun List<TaskItem>.extraQuestCards(completedIds: Set<Long>): List<ExtraQuestUiState> =
+    filter { it.kind != "дело дня" && it.title != demoToday.impulse.title }
+        .take(4)
+        .map { task ->
+            ExtraQuestUiState(
+                id = task.id,
+                title = task.title,
+                subtitle = "${task.category} · сложн. ${task.difficulty} · сил ${task.energyCost}",
+                points = task.points,
+                completed = task.id in completedIds
+            )
+        }
+        .ifEmpty { demoToday.extraQuests }
 
 @Preview(showBackground = true)
 @Composable

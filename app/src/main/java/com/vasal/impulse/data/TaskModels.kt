@@ -30,7 +30,7 @@ data class TaskDraft(
         energyCost = energyCost,
         durationMinutes = durationMinutes
     ).points,
-    val kind: String = TaskKinds.first()
+    val kind: String = "гибкое"
 )
 
 val TaskCategories = listOf("дом", "работа", "тело", "восстановление", "админ")

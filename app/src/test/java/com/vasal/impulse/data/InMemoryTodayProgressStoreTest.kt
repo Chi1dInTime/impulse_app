@@ -35,4 +35,21 @@ class InMemoryTodayProgressStoreTest {
             store.todayProgress.first()
         )
     }
+
+    @Test
+    fun completeExtraQuestAddsPointsAndTitleOnlyOnce() = runBlocking {
+        val store = InMemoryTodayProgressStore()
+
+        store.completeExtraQuest(taskId = 3, title = "Прогулка 10 минут", points = 8)
+        store.completeExtraQuest(taskId = 3, title = "Прогулка 10 минут", points = 8)
+
+        assertEquals(
+            TodayProgressState(
+                points = 40,
+                completedExtraQuestIds = setOf(3),
+                completedExtraQuestTitles = listOf("Прогулка 10 минут")
+            ),
+            store.todayProgress.first()
+        )
+    }
 }

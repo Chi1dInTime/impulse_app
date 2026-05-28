@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [DailyProgressEntity::class, QuestEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class ImpulseDatabase : RoomDatabase() {
@@ -50,6 +50,13 @@ abstract class ImpulseDatabase : RoomDatabase() {
             }
         }
 
+        private val Migration3To4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE daily_progress ADD COLUMN completedExtraQuestIds TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE daily_progress ADD COLUMN completedExtraQuestTitles TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun getInstance(context: Context): ImpulseDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -59,6 +66,7 @@ abstract class ImpulseDatabase : RoomDatabase() {
                 )
                     .addMigrations(Migration1To2)
                     .addMigrations(Migration2To3)
+                    .addMigrations(Migration3To4)
                     .build()
                     .also { instance = it }
             }

@@ -59,6 +59,7 @@ fun StatsScreen(
     val traces = history
         .filter { it.traceTitle != null }
         .sortedByDescending { it.date }
+    var showWeekTraces by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -110,12 +111,57 @@ fun StatsScreen(
             }
         }
         DayDetailsCard(selectedDay)
-        if (traces.isEmpty()) {
+        WeekTracesHeader(
+            traceCount = traces.size,
+            expanded = showWeekTraces,
+            onClick = { showWeekTraces = !showWeekTraces }
+        )
+        if (showWeekTraces && traces.isEmpty()) {
             EmptyTraceCard()
-        } else {
+        } else if (showWeekTraces) {
             traces.forEach { trace ->
                 TracePreview(trace)
             }
+        }
+    }
+}
+
+@Composable
+private fun WeekTracesHeader(
+    traceCount: Int,
+    expanded: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = WarmSurface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    text = "Следы недели",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "$traceCount записей",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f)
+                )
+            }
+            Text(
+                text = if (expanded) "Свернуть" else "Показать",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = DayGreen
+            )
         }
     }
 }
@@ -184,6 +230,9 @@ private fun DayDetailsCard(day: WeekDay) {
                 }
                 if (entry.dailyTaskCompleted) {
                     Text("Дело дня выполнено", style = MaterialTheme.typography.bodyMedium)
+                }
+                entry.completedExtraQuestTitles.forEach { title ->
+                    Text("Дополнительно: $title", style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(
                     text = entry.traceTitle ?: "След дня пока без названия",
@@ -290,6 +339,7 @@ private fun colorForPoints(points: Int): Color? =
 
 private fun traceSubtitle(trace: DayProgressHistoryItem): String =
     when {
+        trace.completedExtraQuestTitles.isNotEmpty() -> "ещё ${trace.completedExtraQuestTitles.size} доп."
         trace.dailyTaskCompleted -> "дело дня выполнено"
         trace.impulseCompleted -> "импульс выполнен"
         else -> "день сохранён"

@@ -9,4 +9,6 @@ interface TodayProgressStore {
     suspend fun completeImpulse(points: Int)
 
     suspend fun completeDailyTask(points: Int, title: String)
+
+    suspend fun completeExtraQuest(taskId: Long, title: String, points: Int)
 }

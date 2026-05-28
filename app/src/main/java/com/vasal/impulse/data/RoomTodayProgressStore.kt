@@ -32,7 +32,9 @@ class RoomTodayProgressStore(
                 points = currentPoints + points,
                 impulseCompleted = true,
                 dailyTaskCompleted = current?.dailyTaskCompleted ?: false,
-                traceTitle = current?.traceTitle
+                traceTitle = current?.traceTitle,
+                completedExtraQuestIds = current?.completedExtraQuestIds.orEmpty(),
+                completedExtraQuestTitles = current?.completedExtraQuestTitles.orEmpty()
             )
         )
     }
@@ -50,7 +52,31 @@ class RoomTodayProgressStore(
                 points = currentPoints + points,
                 impulseCompleted = current?.impulseCompleted ?: false,
                 dailyTaskCompleted = true,
-                traceTitle = title
+                traceTitle = title,
+                completedExtraQuestIds = current?.completedExtraQuestIds.orEmpty(),
+                completedExtraQuestTitles = current?.completedExtraQuestTitles.orEmpty()
+            )
+        )
+    }
+
+    override suspend fun completeExtraQuest(taskId: Long, title: String, points: Int) {
+        val current = dao.getByDate(todayKey)
+        val completedIds = current?.completedExtraQuestIds.toIdSet()
+        if (taskId in completedIds) {
+            return
+        }
+
+        val currentPoints = current?.points ?: InitialTodayPoints
+        val titles = current?.completedExtraQuestTitles.toTitleList()
+        dao.upsert(
+            DailyProgressEntity(
+                date = todayKey,
+                points = currentPoints + points,
+                impulseCompleted = current?.impulseCompleted ?: false,
+                dailyTaskCompleted = current?.dailyTaskCompleted ?: false,
+                traceTitle = current?.traceTitle,
+                completedExtraQuestIds = (completedIds + taskId).joinToString(","),
+                completedExtraQuestTitles = (titles + title).joinToString("\n")
             )
         )
     }
@@ -61,7 +87,9 @@ private fun DailyProgressEntity.toState(): TodayProgressState =
         points = points,
         impulseCompleted = impulseCompleted,
         dailyTaskCompleted = dailyTaskCompleted,
-        traceTitle = traceTitle
+        traceTitle = traceTitle,
+        completedExtraQuestIds = completedExtraQuestIds.toIdSet(),
+        completedExtraQuestTitles = completedExtraQuestTitles.toTitleList()
     )
 
 private fun DailyProgressEntity.toHistoryItem(): DayProgressHistoryItem =
@@ -70,5 +98,18 @@ private fun DailyProgressEntity.toHistoryItem(): DayProgressHistoryItem =
         points = points,
         impulseCompleted = impulseCompleted,
         dailyTaskCompleted = dailyTaskCompleted,
-        traceTitle = traceTitle
+        traceTitle = traceTitle,
+        completedExtraQuestTitles = completedExtraQuestTitles.toTitleList()
     )
+
+private fun String?.toIdSet(): Set<Long> =
+    orEmpty()
+        .split(",")
+        .mapNotNull { it.toLongOrNull() }
+        .toSet()
+
+private fun String?.toTitleList(): List<String> =
+    orEmpty()
+        .split("\n")
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
